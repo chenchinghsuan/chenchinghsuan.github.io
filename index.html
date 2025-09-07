@@ -3,108 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>陳璟萱的個人簡歷</title>
+    <title>陳璟萱 (Maggie) 的個人簡歷</title>
     <style>
+        /* 從 Google Fonts 導入更圓潤、更俏皮的 Nunito 字體 */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+
+        /* --- 整體頁面設定 --- */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
+            font-family: 'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
             margin: 0;
             padding: 20px;
-            background-color: #f4f7f6;
-            color: #333;
+            background-color: #fef5e7; /* 溫暖、柔和的米色背景 */
+            color: #4a4a4a; /* 溫和的深灰色文字 */
         }
+
+        /* --- 主要內容容器 --- */
         .container {
             max-width: 800px;
             margin: 30px auto;
-            padding: 25px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 15px; /* 俏皮感的圓角 */
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
         }
+
+        /* --- 標題樣式 --- */
         h1, h2 {
             color: #2c3e50;
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 10px;
-            margin-top: 25px;
         }
+
         h1 {
             text-align: center;
             font-size: 2.5em;
             margin-bottom: 20px;
+            font-weight: 700;
         }
+
         h2 {
             font-size: 1.8em;
+            font-weight: 700;
             color: #34495e;
+            border-bottom: 3px solid #e67e22; /* 主題橘色底線 */
+            padding-bottom: 10px;
+            margin-top: 35px;
         }
+
+        /* --- 個人照片 --- */
         .profile-photo {
             display: block;
             margin: 0 auto 30px auto;
-            width: 200px; /* 調整照片大小 */
+            width: 200px;
             height: 200px;
             object-fit: cover;
-            border-radius: 50%; /* 讓照片變成圓形 */
-            border: 5px solid #bdc3c7;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border: 6px solid #e67e22; /* 主題橘色邊框 */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         }
+
+        /* --- 列表項目 --- */
         ul {
             list-style-type: none;
             padding: 0;
         }
+
         ul li {
-            background: #ecf0f1;
-            margin-bottom: 8px;
-            padding: 12px 15px;
-            border-radius: 5px;
-            border-left: 5px solid #3498db;
-        }
-        p {
+            background: #fdfdfd;
             margin-bottom: 10px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 5px solid #e67e22;
+            transition: all 0.3s ease; /* 平滑過渡效果 */
         }
+
+        /* 俏皮的滑鼠懸停效果 */
+        ul li:hover {
+            transform: translateX(10px);
+            box-shadow: 0 4px 15px rgba(230, 126, 34, 0.2);
+            background-color: #fff;
+        }
+        
+        b {
+            color: #34495e;
+        }
+
+        /* --- 聯絡資訊與連結 --- */
         .contact-info {
             text-align: center;
             margin-top: 40px;
             padding-top: 20px;
             border-top: 1px dashed #ccc;
-            font-size: 0.9em;
-            color: #7f8c8d;
         }
+
         .contact-info a {
-            color: #3498db;
+            color: #e67e22; /* 主題橘色連結 */
             text-decoration: none;
+            font-weight: 700;
+            transition: color 0.3s ease;
         }
+
         .contact-info a:hover {
-            text-decoration: underline;
+            color: #d35400;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>陳璟萱的個人簡歷</h1>
+        <h1>陳璟萱 (Maggie) 的個人簡歷</h1>
         
-        <img src="profile.jpg" alt="陳璟萱的照片" class="profile-photo"> 
+        <img src="profile.jpg" alt="陳璟萱的照片" class="profile-photo">
+
+        <h2>關於我</h2>
+        <p>
+            <b>你好，我是陳璟萱！</b><br>
+            對我來說，世界就像一個大型的商業謎題，而數字就是解謎的鑰匙。在大學期間，我裝備了「經濟學」與「財務金融」這兩把萬能鑰匙，前者讓我看懂市場的宏觀邏輯，後者則讓我學會精算微觀的價值與風險。我享受從複雜數據中找出關鍵線索的過程，並熱愛為團隊找到那條通往成功的最佳路徑。
+        </p>
 
         <h2>學歷背景</h2>
         <ul>
-            <li>**淡江大學 經濟學系** (主修)</li>
-            <li>**淡江大學 財務金融學系** (輔修)</li>
-            </ul>
+            <li><b>主修：</b>淡江大學 經濟學系</li>
+            <li><b>輔修：</b>淡江大學 財務金融學系</li>
+        </ul>
 
         <h2>個人特質</h2>
         <ul>
-            <li>**領導能力：** 善於規劃與組織，能有效帶領團隊達成目標。</li>
-            <li>**團隊合作：** 樂於與人溝通協調，重視團隊協作精神。</li>
-            <li>**負責任：** 對於所承擔的任務，能盡心盡力，追求最佳成果。</li>
+            <li><b>領導能力 🧭：</b> 不只是帶頭往前衝，更擅長凝聚共識，確保團隊航向同一個目標。</li>
+            <li><b>團隊合作 🤝：</b> 相信 1+1>2 的魔力，樂於溝通協調，讓每個人的專業完美合奏。</li>
+            <li><b>負責任 ✅：</b> 我的待辦事項上沒有「明天再說」。交給我的事，使命必達。</li>
         </ul>
 
         <h2>語言能力</h2>
         <ul>
-            <li>**英文：** 聽說讀寫皆可 (建議可以補充檢定成績，例如：多益 xxx 分)</li>
-            <li>**中文：** 母語</li>
+            <li><b>中文：</b> 母語</li>
+            <li><b>英文：</b> 聽、說、讀、寫皆可，能在專業和生活頻道之間無痛切換 🌐。</li>
         </ul>
 
         <div class="contact-info">
             <p>Email: <a href="mailto:你的email@example.com">你的email@example.com</a></p>
-            </div>
+        </div>
     </div>
 </body>
 </html>
