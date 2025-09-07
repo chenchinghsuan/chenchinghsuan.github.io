@@ -50,15 +50,17 @@
         }
 
         /* --- 個人照片 --- */
-        .profile-photo {
-            display: block;
-            margin: 0 auto 30px auto;
-            width: 200px;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 6px solid #e67e22; /* 主題橘色邊框 */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    .profile-photo {
+        display: block;
+        margin: 0 auto 30px auto;
+        width: 200px;
+        height: 200px;
+        object-fit: cover; /* 保持圖片比例，裁剪多餘部分以填充 */
+        object-position: center top; /* 確保圖片頂部（頭部）顯示，並水平置中 */
+        border-radius: 50%;
+        border: 6px solid #e67e22; /* 主題橘色邊框 */
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
         }
 
         /* --- 列表項目 --- */
@@ -109,14 +111,15 @@
 </head>
 <body>
     <div class="container">
-        <h1>陳璟萱 (Maggie) 的個人簡歷</h1>
+        <h1>陳璟萱的個人簡歷</h1>
         
         <img src="profile.jpg" alt="陳璟萱的照片" class="profile-photo">
 
         <h2>關於我</h2>
         <p>
             <b>你好，我是陳璟萱！</b><br>
-            對我來說，世界就像一個大型的商業謎題，而數字就是解謎的鑰匙。在大學期間，我裝備了「經濟學」與「財務金融」這兩把萬能鑰匙，前者讓我看懂市場的宏觀邏輯，後者則讓我學會精算微觀的價值與風險。我享受從複雜數據中找出關鍵線索的過程，並熱愛為團隊找到那條通往成功的最佳路徑。
+            我的名字裡有個『萱』，像萱草一樣，希望能帶給大家陽光和忘憂的感覺。我的人生哲學就是捕捉生活中的每一個亮點，期待能和你們一起創造更多閃閃發光的日子⭐
+            我喜歡笑，也喜歡讓身邊的人開心，希望能把這份快樂魔法分享給你們每一個人！
         </p>
 
         <h2>學歷背景</h2>
