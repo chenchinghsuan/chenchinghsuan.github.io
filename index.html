@@ -97,11 +97,20 @@
         ul li {
             padding: 5px 0;
         }
+        
+        /* --- 雙欄列表樣式 (新增這一段) --- */
+        .two-columns {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            column-count: 2;
+            column-gap: 30px;
+        }
 
         /* 巢狀清單的樣式微調 */
         ul ul li {
             border-left: none;
-            padding: 2px 0 2px 15px; /* 增加一點內縮 */
+            padding: 2px 0 2px 15px;
         }
         
         b { color: #34495e; }
@@ -143,7 +152,7 @@
         <div class="card profile-card">
             <img src="profile.jpg" alt="陳璟萱的照片" class="profile-photo">
             <h1>陳璟萱 (Maggie)</h1>
-            <p>一個陽光和忘憂的分享者</p>
+           
         </div>
 
         <div class="card about-card">
@@ -169,8 +178,8 @@
                     <b>淡江之聲電台 - 新聞部經理、節目主持人</b><br>
                     
                     <ul>
-                        <li>- 獨立企劃並主持回到小時候、嬉戲胡搞瞎搞等節節目。</li>
-                        <li>- 與團隊成員協作，從腳本撰寫到播出，學習專案合作技巧。</li>
+                        <li>- 獨立企劃並主持回到小時候、嬉戲胡搞瞎搞等節目</li>
+                        <li>- 從腳本撰寫到播出，學習專案合作技巧</li>
                         <li>- 最佳公益廣告獎-國立台灣藝術大學第50屆藝美獎</li>
                     </ul>
                 </li>
@@ -179,8 +188,9 @@
         
         <div class="card certs-card">
             <h2>CERTIFICATIONS</h2>
+            <ul class="two-columns">
             <ul>
-                <li>TOIC 690分</li>
+                <li>TOEIC 690分</li>
                 <li>金融市場常識與職業道德</li>
                 <li>信託業業務人員信託業務</li>
                 <li>人身保險業務員</li>
