@@ -528,31 +528,76 @@
             observer.observe(el);
         });
     </script>
-    /* START: 新的白色按鈕樣式 */
-#chat-bubble {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 60px;
-    height: 60px;
-    background-color: #ffffff; /* 按鈕顏色改成白色 */
-    color: #333333; /* 圖示顏色改成深灰色 */
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 28px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    transition: all 0.3s ease;
-    border: 1px solid #eee; /* 加上一個淺灰色邊框，在白色背景上也能看見 */
-}
+    <style>
+    /* 按鈕本體樣式 */
+    #chat-bubble {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background-color: #ffffff; /* 按鈕顏色改成白色 */
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        transition: all 0.3s ease;
+        border: 1px solid #eee; /* 加上一個淺灰色邊框，在白色背景上也能看見 */
+    }
 
-#chat-bubble:hover {
-    transform: scale(1.1);
-    background-color: #f8f9fa; /* 滑鼠移上去變成淺灰色 */
-}
-/* END: 新的白色按鈕樣式 */
+    #chat-bubble:hover {
+        transform: scale(1.1);
+        background-color: #f8f9fa; /* 滑鼠移上去變成淺灰色 */
+    }
+
+    /* 聊天視窗樣式 */
+    #chat-window {
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        width: 350px;  /* 彈出視窗寬度 */
+        height: 500px; /* 彈出視窗高度 */
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+        display: none; /* 預設隱藏 */
+        z-index: 999;
+        flex-direction: column;
+        background-color: white;
+    }
+    
+    #chat-window iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+</style>
+
+<div id="chat-bubble">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #333333;">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+</div>
+
+<div id="chat-window">
+    <iframe src="https://chenchinghsuan-ecoshane-chatbot.hf.space"></iframe>
+</div>
+
+<script>
+    const chatBubble = document.getElementById('chat-bubble');
+    const chatWindow = document.getElementById('chat-window');
+
+    chatBubble.addEventListener('click', () => {
+        if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
+            chatWindow.style.display = 'flex';
+        } else {
+            chatWindow.style.display = 'none';
+        }
+    });
+</script>
+
 </body>
 </html>
