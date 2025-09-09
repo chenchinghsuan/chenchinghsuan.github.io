@@ -528,5 +528,31 @@
             observer.observe(el);
         });
     </script>
+    /* START: 新的白色按鈕樣式 */
+#chat-bubble {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: #ffffff; /* 按鈕顏色改成白色 */
+    color: #333333; /* 圖示顏色改成深灰色 */
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    transition: all 0.3s ease;
+    border: 1px solid #eee; /* 加上一個淺灰色邊框，在白色背景上也能看見 */
+}
+
+#chat-bubble:hover {
+    transform: scale(1.1);
+    background-color: #f8f9fa; /* 滑鼠移上去變成淺灰色 */
+}
+/* END: 新的白色按鈕樣式 */
 </body>
 </html>
