@@ -528,44 +528,101 @@
             observer.observe(el);
         });
     </script>
+    <!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧客服 預覽頁面 (小葉子圖示版)</title>
     <style>
-    #chat-bubble {
-        position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px;
-        background-color: #e0e7ff; /* 清爽的淺藍色 */
-        border-radius: 50%; display: flex; justify-content: center; align-items: center;
-        cursor: pointer; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        z-index: 1000; transition: all 0.3s ease;
-    }
-    #chat-bubble:hover {
-        transform: scale(1.1); background-color: #c7d2fe; /* 滑鼠移上去變成稍深的藍色 */
-    }
-    #chat-window {
-        position: fixed; bottom: 100px; right: 30px; width: 350px; height: 500px;
-        border-radius: 15px; overflow: hidden; box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
-        display: none; z-index: 999; flex-direction: column; background-color: white;
-    }
-    #chat-window iframe { width: 100%; height: 100%; border: none; }
-</style>
-<div id="chat-bubble">
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #374151;">
-        <path d="M2 22c1.25-.91 2.3-2.5 3-4 1.43-3.04 2.1-6.23 2-9 .23-3.54-2.1-6.7-5-8"/>
-        <path d="M22 22c-1.25-.91-2.3-2.5-3-4-1.43-3.04-2.1-6.23-2-9-.23-3.54 2.1-6.7 5-8"/>
-    </svg>
-</div>
-<div id="chat-window">
-    <iframe src="https://chenchinghsuan-ecoshane-chatbot.hf.space"></iframe>
-</div>
-<script>
-    const chatBubble = document.getElementById('chat-bubble');
-    const chatWindow = document.getElementById('chat-window');
-    chatBubble.addEventListener('click', () => {
-        if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
-            chatWindow.style.display = 'flex';
-        } else {
-            chatWindow.style.display = 'none';
+        body { font-family: sans-serif; background-color: #f0f0f0; margin: 0; padding: 2rem; height: 200vh; }
+        h1 { color: #333; }
+        p { color: #555; line-height: 1.6; }
+        .dark-section { background-color: #2c5530; padding: 2rem; border-radius: 15px; }
+        .dark-section h2, .dark-section p { color: white; }
+    </style>
+</head>
+<body>
+
+    <h1>這裡是您官網的模擬頁面</h1>
+    <p>請看右下角，聊天按鈕的圖示已經更新為「一片小葉子」圖案。</p>
+    <p>您可以點擊它，來測試聊天視窗的開啟和關閉。</p>
+    <div class="dark-section">
+        <h2>模擬「聯絡我們」區塊</h2>
+        <p>淺灰色按鈕搭配白色葉子圖示，在這個深色背景上也能清晰可見。</p>
+    </div>
+
+    <style>
+        /* 按鈕本體樣式 */
+        #chat-bubble {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: #f3f4f6; /* 清爽的淺灰色按鈕 */
+            border: 1px solid #e5e7eb; /* 加上一個邊框增加立體感 */
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transition: all 0.3s ease;
         }
-    });
-</script>
+
+        #chat-bubble:hover {
+            transform: scale(1.1);
+            background-color: #e5e7eb; /* 滑鼠移上去變成稍深的灰色 */
+        }
+
+        /* 聊天視窗樣式 */
+        #chat-window {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 350px;
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+            display: none; /* 預設隱藏 */
+            z-index: 999;
+            flex-direction: column;
+            background-color: white;
+        }
+        
+        #chat-window iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+
+    <div id="chat-bubble">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor" style="color: #66bb6a;">
+            <path d="M17.34 1.13c-2.93-1.12-6.5-.4-9.33 1.76l-.1.08c-3.1 2.37-3.96 6.54-2.18 9.53 1.8 3 5.4 4.5 8.33 3.38 2.93-1.12 6.5-.4 9.33-1.76l.1-.08c3.1-2.37 3.96-6.54 2.18-9.53-1.79-3-5.39-4.5-8.33-3.38zm-1.87 9.87c-1.39 1.39-3.71 1.76-5.4 1.09-.85-.33-1.74-.69-2.67-.93 1.76-2.93 2.13-6.26.79-8.49l-.02-.03c-.22-.34-.51-.62-.87-.84.28.3.57.65.85 1.05 1.78 3.1 2.5 6.64 1.81 9.94-1.39-1.39-3.71-1.76-5.4-1.09-.85-.33-1.74-.69-2.67-.93 1.76-2.93 2.13-6.26.79-8.49l-.02-.03c-.22-.34-.51-.62-.87-.84.28.3.57.65.85 1.05 1.78 3.1 2.5 6.64 1.81 9.94z"/>
+        </svg>
+    </div>
+
+    <div id="chat-window">
+        <iframe src="https://chenchinghsuan-ecoshane-chatbot.hf.space"></iframe>
+    </div>
+
+    <script>
+        const chatBubble = document.getElementById('chat-bubble');
+        const chatWindow = document.getElementById('chat-window');
+        chatBubble.addEventListener('click', () => {
+            if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
+                chatWindow.style.display = 'flex';
+            } else {
+                chatWindow.style.display = 'none';
+            }
+        });
+    </script>
+    </body>
+</html>
     
 </body>
 </html>
