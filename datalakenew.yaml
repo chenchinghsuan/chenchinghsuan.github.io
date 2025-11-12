@@ -1,0 +1,901 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Week 15 Capstone Project 4: Data Lake Platform - Final Implementation with ETL and API Gateway and full monitoring/governance'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Environment name for resource tagging
+
+  StudentName:
+    Type: String
+    Description: Student name for resource identification (e.g., alice)
+    AllowedPattern: ^[a-z][a-z0-9]*$
+    ConstraintDescription: Must start with lowercase letter, contain only lowercase alphanumeric
+
+  EmailAddress:
+    Type: String
+    Description: Email address for CloudWatch alarms and notifications
+    AllowedPattern: ^[a-zA-Z0-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
+
+  RawDataRetentionDays:
+    Type: Number
+    Default: 7
+    MinValue: 1
+    MaxValue: 30
+    Description: Number of days to retain raw data before archiving
+
+  ProcessedDataRetentionDays:
+    Type: Number
+    Default: 30
+    MinValue: 7
+    MaxValue: 90
+    Description: Number of days to retain processed data before archiving
+
+  EnableCloudTrailDataEvents:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: Enable CloudTrail data events (incurs costs, enable only for final demo)
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Environment Configuration
+        Parameters: [Environment, StudentName]
+      - Label:
+          default: Notification Settings
+        Parameters: [EmailAddress]
+      - Label:
+          default: Data Retention Settings
+        Parameters: [RawDataRetentionDays, ProcessedDataRetentionDays]
+      - Label:
+          default: Compliance Settings
+        Parameters: [EnableCloudTrailDataEvents]
+
+Conditions:
+  EnableCloudTrail: !Equals [!Ref EnableCloudTrailDataEvents, 'true']
+
+Resources:
+  # ============================================================================
+  # KMS Key for Encryption
+  # ============================================================================
+  EncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub Encryption key for ${StudentName} data lake platform
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow Services to use the key
+            Effect: Allow
+            Principal:
+              Service:
+                - s3.amazonaws.com
+                - lambda.amazonaws.com
+                - dynamodb.amazonaws.com
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey
+            Resource: '*'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: capstone-data-lake
+
+  EncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub alias/ntpu-${Environment}-${StudentName}-datalake
+      TargetKeyId: !Ref EncryptionKey
+
+  # ============================================================================
+  # S3 Buckets (Data Lake Layers)
+  # ============================================================================
+
+  RawDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ntpu-${Environment}-${StudentName}-datalake-raw
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !Ref EncryptionKey
+            BucketKeyEnabled: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: ArchiveRawData
+            Status: Enabled
+            ExpirationInDays: !Ref RawDataRetentionDays
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+      Tags:
+        - Key: Layer
+          Value: raw
+
+  ProcessedDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ntpu-${Environment}-${StudentName}-datalake-processed
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !Ref EncryptionKey
+            BucketKeyEnabled: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: ArchiveProcessedData
+            Status: Enabled
+            Transitions:
+              - TransitionInDays: !Ref ProcessedDataRetentionDays
+                StorageClass: GLACIER_IR
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Layer
+          Value: processed
+
+  AggregatedDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ntpu-${Environment}-${StudentName}-datalake-aggregated
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !Ref EncryptionKey
+            BucketKeyEnabled: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: ArchiveAggregatedData
+            Status: Enabled
+            Transitions:
+              - TransitionInDays: 365
+                StorageClass: GLACIER_IR
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Layer
+          Value: aggregated
+
+  # ============================================================================
+  # DynamoDB Tables (Aggregated Data)
+  # ============================================================================
+
+  TransactionSummaryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ntpu-${Environment}-${StudentName}-transaction-summary-v2
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: CompanyType
+          AttributeType: S
+        - AttributeName: DateHour
+          AttributeType: S
+      KeySchema:
+        - AttributeName: CompanyType
+          KeyType: HASH
+        - AttributeName: DateHour
+          KeyType: RANGE
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+        KMSMasterKeyId: !Ref EncryptionKey
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: false
+      Tags:
+        - Key: Project
+          Value: capstone-data-lake
+
+  # ============================================================================
+  # Lambda Execution Roles
+  # ----------------------------------------------------------------------------
+  # LambdaExecutionRole: ETL/Ingestion (Read/Write S3, Write DynamoDB)
+  # DataQueryRole: API Query (Read Only DynamoDB)
+  # ============================================================================
+
+  # 寫入 Lambda 執行角色 (用於 DataIngestionFunction 和 ETLProcessorFunction)
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ntpu-${Environment}-${StudentName}-etl-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DataLakeAccess_Write
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  # S3 R/W on Raw and Processed Buckets
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt RawDataBucket.Arn
+                  - !Sub ${RawDataBucket.Arn}/*
+                  - !GetAtt ProcessedDataBucket.Arn
+                  - !Sub ${ProcessedDataBucket.Arn}/*
+              - Effect: Allow
+                Action:
+                  # DynamoDB Write/Query
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                Resource:
+                  - !GetAtt TransactionSummaryTable.Arn
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:GenerateDataKey
+                Resource:
+                  - !GetAtt EncryptionKey.Arn
+      Tags:
+        - Key: Project
+          Value: capstone-data-lake
+
+  # 【已修正】DataQueryRole: 新增 KMS Decrypt 權限以讀取加密的 DynamoDB
+  DataQueryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ntpu-${Environment}-${StudentName}-query-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBReadAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # Statement 1: DynamoDB Read Only
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                Resource:
+                  - !GetAtt TransactionSummaryTable.Arn
+              # Statement 2: KMS Decrypt (新增，用於解密 DynamoDB 項目)
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource:
+                  - !GetAtt EncryptionKey.Arn
+      Tags:
+        - Key: Project
+          Value: capstone-data-lake
+
+  # ============================================================================
+  # Lambda Functions
+  # ============================================================================
+
+  DataIngestionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ntpu-${Environment}-${StudentName}-data-ingestion
+      Runtime: python3.11
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      MemorySize: 512
+      Environment:
+        Variables:
+          RAW_BUCKET: !Ref RawDataBucket
+          PROCESSED_BUCKET: !Ref ProcessedDataBucket
+          KMS_KEY_ID: !Ref EncryptionKey
+      Code:
+        ZipFile: |
+          # 匯入必要的函式庫
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+          import random
+
+          s3 = boto3.client('s3')
+          raw_bucket = os.environ['RAW_BUCKET']
+          kms_key_id = os.environ.get('KMS_KEY_ID')
+
+          def generate_transaction(company):
+              """根據子公司類型生成特定的模擬交易資料"""
+              
+              ttype = ""
+              if company == "bank":
+                  # 銀行交易: 存款/提款/轉帳
+                  ttype = random.choice(["DEPOSIT", "WITHDRAWAL", "TRANSFER"])
+              elif company == "securities":
+                  # 證券交易: 買入/賣出
+                  ttype = random.choice(["BUY", "SELL"])
+              else: # insurance
+                  # 保險交易: 保費繳納/理賠
+                  ttype = random.choice(["PREMIUM", "CLAIM"])
+                  
+              return {
+                  "transactionId": str(random.randint(100000, 999999)),
+                  "companyType": company,
+                  "transactionType": ttype, 
+                  "amount": round(random.uniform(50.0, 15000.0), 2),
+                  "currency": "TWD",
+                  "timestamp": datetime.now().isoformat(),
+                  "accountId": f"{company.upper()}_{str(random.randint(10000, 99999))}",
+                  "status": random.choice(["SUCCESS", "FAILURE"])
+              }
+
+          def handler(event, context):
+              companies = ["bank", "securities", "insurance"]
+              response_messages = []
+              # S3 分區結構: company/year=.../month=.../day=.../filename.json
+              current_date_path = f"year={datetime.now().year}/month={datetime.now().month}/day={datetime.now().day}"
+
+              for company in companies:
+                  transactions = []
+                  for _ in range(random.randint(10, 20)):
+                      transactions.append(generate_transaction(company))
+
+                  file_content = "\n".join([json.dumps(t) for t in transactions])
+                  file_key = f"{company}/{current_date_path}/{context.aws_request_id}-{company}.json"
+
+                  try:
+                      s3.put_object(
+                          Bucket=raw_bucket,
+                          Key=file_key,
+                          Body=file_content,
+                          ContentType='application/json',
+                          ServerSideEncryption='aws:kms',
+                          SSEKMSKeyId=kms_key_id
+                      )
+                      message = f"Uploaded {len(transactions)} {company} transactions to s3://{raw_bucket}/{file_key}"
+                      print(message)
+                      response_messages.append(message)
+                  except Exception as e:
+                      print(f"Error uploading data for {company}: {e}")
+                      raise e
+                      
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({'message': 'Data ingestion complete', 'details': response_messages})
+              }
+
+  ETLProcessorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ntpu-${Environment}-${StudentName}-etl-processor
+      Runtime: python3.11
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 600
+      MemorySize: 1024
+      Environment:
+        Variables:
+          RAW_BUCKET: !Ref RawDataBucket
+          PROCESSED_BUCKET: !Ref ProcessedDataBucket
+          SUMMARY_TABLE: !Ref TransactionSummaryTable
+          KMS_KEY_ID: !Ref EncryptionKey
+      Code:
+        # 【修正/補完】ETL 程式碼
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+          from collections import defaultdict
+          from decimal import Decimal
+          from botocore.exceptions import ClientError
+          
+          s3 = boto3.client('s3')
+          dynamodb = boto3.resource('dynamodb')
+          
+          raw_bucket = os.environ['RAW_BUCKET']
+          processed_bucket = os.environ['PROCESSED_BUCKET']
+          summary_table_name = os.environ['SUMMARY_TABLE']
+          kms_key_id = os.environ.get('KMS_KEY_ID')
+
+          def handler(event, context):
+              summary_table = dynamodb.Table(summary_table_name)
+              # 檢查是否為 S3 EventBridge notification format
+              s3_event_detail = event.get('detail', {})
+              bucket_name = s3_event_detail.get('bucket', {}).get('name')
+              key = s3_event_detail.get('object', {}).get('key')
+              
+              if bucket_name == raw_bucket and key:
+                  print(f"Detected S3 EventBridge object creation: s3://{bucket_name}/{key}")
+                  s3_records = [{'s3': {'bucket': {'name': bucket_name}, 'object': {'key': key}}}]
+              else:
+                  # 處理排程觸發或其他格式 (此路徑可能接收空事件，或直接 S3 通知)
+                  s3_records = event.get('Records', [])
+                  if not s3_records:
+                      print("Received non-S3 event or empty record list.")
+                      return {'statusCode': 200, 'body': json.dumps({'message': 'No relevant S3 event processed'})}
+
+              aggregation_results = defaultdict(lambda: defaultdict(lambda: Decimal(0)))
+              
+              for record in s3_records:
+                  s3_info = record.get('s3', {})
+                  if not s3_info:
+                      continue
+
+                  bucket = s3_info['bucket']['name']
+                  key = s3_info['object']['key']
+                  
+                  print(f"Starting ETL for s3://{bucket}/{key}")
+                  processed_transactions_list = []
+
+                  try:
+                      # 1. 讀取原始資料 (Raw)
+                      obj = s3.get_object(Bucket=bucket, Key=key)
+                      file_content = obj['Body'].read().decode('utf-8')
+                      raw_transactions = [json.loads(line) for line in file_content.split('\n') if line]
+                      
+                      # 2. 清洗、轉換、標準化 (Processed)
+                      for tx in raw_transactions:
+                          # 模擬清洗: 篩選成功的交易
+                          if tx['status'] == 'SUCCESS':
+                              # 模擬標準化: 增加處理時間欄位
+                              tx['processedTimestamp'] = datetime.utcnow().isoformat() + "Z"
+                              processed_transactions_list.append(tx)
+                              
+                              # 聚合: 計算每個子公司的總成功交易金額和數量
+                              company = tx['companyType']
+                              # 使用 Decimal 處理金額以避免浮點數問題
+                              amount_decimal = Decimal(str(round(tx['amount'], 2)))
+                              
+                              aggregation_results[company]['total_amount'] += amount_decimal
+                              # count 由於 DynamoDB 儲存為 N (Number) 類型，需保持為 Decimal
+                              aggregation_results[company]['total_count'] += Decimal(1)
+
+                      # 3. 寫入 Processed 層 (JSONL 格式)
+                      processed_file_content = "\n".join([json.dumps(ptx) for ptx in processed_transactions_list])
+                      processed_key = key.replace('.json', '-processed.json')
+                      
+                      s3.put_object(
+                          Bucket=processed_bucket, 
+                          Key=processed_key, 
+                          Body=processed_file_content,
+                          ServerSideEncryption='aws:kms',
+                          SSEKMSKeyId=kms_key_id
+                      )
+                      print(f"Wrote {len(processed_transactions_list)} records to s3://{processed_bucket}/{processed_key}")
+
+                  except ClientError as e:
+                      print(f"S3 Client Error during ETL for {key}: {e}")
+                      continue 
+                  except Exception as e:
+                      print(f"Unknown Error during ETL for {key}: {e}")
+                      continue 
+
+              # 4. 寫入 DynamoDB (Aggregated)
+              if aggregation_results:
+                  # 使用當前 UTC 時間的小時作為 DateHour
+                  current_hour = datetime.utcnow().strftime('%Y-%m-%d-%H')
+                  for company, data in aggregation_results.items():
+                      try:
+                          summary_table.put_item(
+                              Item={
+                                  'CompanyType': company,
+                                  'DateHour': current_hour,
+                                  'TotalAmountUSD': data['total_amount'], 
+                                  'SuccessCount': int(data['total_count']), # DynamoDB put_item 會自動處理 Decimal
+                                  'UpdateTimestamp': datetime.utcnow().isoformat() + "Z"
+                              }
+                          )
+                          print(f"Wrote summary for {company} at {current_hour} to DynamoDB.")
+                      except Exception as e:
+                          print(f"Error writing DynamoDB item for {company}: {e}")
+                          
+              return {'statusCode': 200, 'body': json.dumps({'message': 'ETL processing complete'})}
+
+  DataQueryFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ntpu-${Environment}-${StudentName}-data-query
+      Runtime: python3.11
+      Handler: index.handler
+      Role: !GetAtt DataQueryRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          SUMMARY_TABLE: !Ref TransactionSummaryTable
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from botocore.exceptions import ClientError
+          from boto3.dynamodb.conditions import Key
+          from decimal import Decimal
+
+          # 修正: 為了讓 API Gateway 能序列化 DynamoDB 輸出的 Decimal 類型，
+          # 我們需要一個自訂的 JSON 序列化器。
+          class DecimalEncoder(json.JSONEncoder):
+              def default(self, obj):
+                  if isinstance(obj, Decimal):
+                      # 將 Decimal 轉換為浮點數或整數的字串表示，以避免 JSON 序列化錯誤
+                      # 這裡使用 float(obj) 讓數字類型正確輸出到 JSON
+                      return float(obj)
+                  return json.JSONEncoder.default(self, obj)
+
+          dynamodb = boto3.resource('dynamodb')
+          summary_table_name = os.environ['SUMMARY_TABLE']
+
+          def handler(event, context):
+              print(f"Received query event: {event}")
+              table = dynamodb.Table(summary_table_name)
+              
+              # 獲取路徑參數 (例如 /summary/{companyType})。
+              path_parameters = event.get('pathParameters', {})
+              company_type = path_parameters.get('companyType', 'bank')
+              
+              if company_type not in ["bank", "securities", "insurance"]:
+                   return {
+                      'statusCode': 400,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*'
+                      },
+                      'body': json.dumps({'status': 'error', 'message': f'Invalid company type: {company_type}'})
+                    }
+              
+              try:
+                  # 查詢 DynamoDB: 根據 CompanyType 查詢，並以降序排序 (DateHour) 取得最新的資料
+                  response = table.query(
+                      KeyConditionExpression=Key('CompanyType').eq(company_type),
+                      ScanIndexForward=False, # 降序排列 (最新數據在最前面)
+                      Limit=1
+                  )
+                  
+                  if response['Items']:
+                      latest_summary = response['Items'][0]
+                      return {
+                          'statusCode': 200,
+                          'headers': {
+                              'Content-Type': 'application/json',
+                              'Access-Control-Allow-Origin': '*'
+                          },
+                          'body': json.dumps({
+                              'status': 'success',
+                              'company': company_type,
+                              'summary': latest_summary
+                          }, cls=DecimalEncoder)
+                      }
+                  else:
+                       return {
+                          'statusCode': 404,
+                          'headers': {
+                              'Content-Type': 'application/json',
+                              'Access-Control-Allow-Origin': '*'
+                          },
+                          'body': json.dumps({'status': 'error', 'message': f'No summary found for {company_type}'})
+                       }
+                       
+              except ClientError as e:
+                   print(f"DynamoDB Error: {e.response['Error']['Message']}")
+                   return {
+                      'statusCode': 500,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*'
+                      },
+                      'body': json.dumps({'status': 'error', 'message': 'Internal database error'})
+                    }
+
+  # ============================================================================
+  # EventBridge Rules (Scheduled Data Ingestion & S3 Trigger)
+  # ============================================================================
+
+  DataIngestionSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub ntpu-${Environment}-${StudentName}-data-ingestion-schedule
+      Description: Trigger data ingestion every 5 minutes
+      # 【已修正】從 cron(0 2 * * ? *) 調整為 rate(5 minutes)
+      ScheduleExpression: rate(5 minutes) 
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt DataIngestionFunction.Arn
+          Id: DataIngestionTarget
+
+  S3EventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub ntpu-${Environment}-${StudentName}-s3-object-created
+      Description: Trigger ETL when new file uploaded to raw bucket
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - Object Created
+        detail:
+          bucket:
+            name:
+              - !Ref RawDataBucket
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt ETLProcessorFunction.Arn
+          Id: ETLProcessorTarget
+
+  # ============================================================================
+  # CloudTrail (Conditional Data Events)
+  # ============================================================================
+  
+  CloudTrailS3LogBucket:
+    Type: AWS::S3::Bucket
+    Condition: EnableCloudTrail
+    Properties:
+      BucketName: !Sub ntpu-${Environment}-${StudentName}-cloudtrail-logs-${AWS::AccountId}
+      AccessControl: LogDeliveryWrite
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      # 為了確保日誌傳輸，通常不加密或使用 S3-Managed Key
+      # BucketEncryption:
+      #   ServerSideEncryptionConfiguration:
+      #     - ServerSideEncryptionByDefault:
+      #         SSEAlgorithm: AES256
+
+  DataLakeCloudTrail:
+    Type: AWS::CloudTrail::Trail
+    Condition: EnableCloudTrail
+    Properties:
+      TrailName: !Sub ntpu-${Environment}-${StudentName}-datalake-trail
+      IsLogging: true
+      S3BucketName: !Ref CloudTrailS3LogBucket
+      IncludeGlobalServiceEvents: false
+      IsMultiRegionTrail: false
+      # 啟用 Data Events (需要額外付費)
+      EventSelectors:
+        - ReadWriteType: All
+          IncludeManagementEvents: true
+          DataResources:
+            - Type: AWS::S3::Object
+              Values:
+                - !Sub arn:aws:s3:::${RawDataBucket}/
+                - !Sub arn:aws:s3:::${ProcessedDataBucket}/
+                - !Sub arn:aws:s3:::${AggregatedDataBucket}/
+
+
+  # ============================================================================
+  # Lambda Permissions
+  # ============================================================================
+
+  DataIngestionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DataIngestionFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DataIngestionSchedule.Arn
+
+  ETLProcessorPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ETLProcessorFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt S3EventRule.Arn
+      
+  ApiGatewayInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DataQueryFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApi}/*/*/*
+
+  # ============================================================================
+  # SNS Topics and CloudWatch Alarms
+  # ============================================================================
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub ntpu-${Environment}-${StudentName}-datalake-alarms
+      Subscription:
+        - Endpoint: !Ref EmailAddress
+          Protocol: email
+      Tags:
+        - Key: Project
+          Value: capstone-data-lake
+          
+  # 【新增】ETL 錯誤告警
+  ETLErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Environment}-${StudentName}-ETL-Function-Errors
+      AlarmDescription: "Alarm if the ETL Processor Lambda function experiences errors."
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 1 # 只要發生一次錯誤就觸發
+      EvaluationPeriods: 1
+      Statistic: Sum
+      Period: 300 # 5 分鐘
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref ETLProcessorFunction
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlarmTopic
+      OKActions:
+        - !Ref AlarmTopic
+
+  # ============================================================================
+  # API Gateway (Data Query Interface)
+  # ============================================================================
+  RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub ntpu-${Environment}-${StudentName}-datalake-api
+      Description: Data Lake Query API for Financial Summary Data
+
+  ApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref RestApi
+      ParentId: !GetAtt RestApi.RootResourceId
+      PathPart: summary # /summary
+
+  ApiCompanyTypeResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref RestApi
+      ParentId: !Ref ApiResource
+      PathPart: '{companyType}' # /summary/{companyType}
+
+  ApiMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RestApi
+      ResourceId: !Ref ApiCompanyTypeResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'" # 允許所有來源
+            ResponseTemplates:
+              application/json: ''
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  ApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RestApi
+      ResourceId: !Ref ApiCompanyTypeResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FunctionArn}/invocations
+          - FunctionArn: !GetAtt DataQueryFunction.Arn
+        IntegrationResponses:
+          - StatusCode: 200
+        PassthroughBehavior: WHEN_NO_MATCH
+      MethodResponses:
+        - StatusCode: 200
+
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - ApiMethod
+      - ApiMethodOptions
+    Properties:
+      RestApiId: !Ref RestApi
+      Description: Initial deployment
+      
+  ApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: prod
+      Description: Production Stage
+      RestApiId: !Ref RestApi
+      DeploymentId: !Ref ApiDeployment
+
+Outputs:
+  RawDataBucketName:
+    Description: S3 Bucket Name for Raw Data
+    Value: !Ref RawDataBucket
+    Export:
+      Name: !Sub ${AWS::StackName}-RawDataBucket
+
+  ProcessedDataBucketName:
+    Description: S3 Bucket Name for Processed Data
+    Value: !Ref ProcessedDataBucket
+    Export:
+      Name: !Sub ${AWS::StackName}-ProcessedDataBucket
+
+  AggregatedDataBucketName:
+    Description: S3 Bucket Name for Aggregated Data
+    Value: !Ref AggregatedDataBucket
+    Export:
+      Name: !Sub ${AWS::StackName}-AggregatedDataBucket
+
+  TransactionSummaryTableName:
+    Description: DynamoDB Transaction Summary Table Name
+    Value: !Ref TransactionSummaryTable
+    Export:
+      Name: !Sub ${AWS::StackName}-TransactionSummaryTable
+
+  DataIngestionFunctionName:
+    Description: Data Ingestion Lambda Function Name
+    Value: !Ref DataIngestionFunction
+    Export:
+      Name: !Sub ${AWS::StackName}-DataIngestionFunction
+
+  ETLProcessorFunctionName:
+    Description: ETL Processor Lambda Function Name
+    Value: !Ref ETLProcessorFunction
+    Export:
+      Name: !Sub ${AWS::StackName}-ETLProcessorFunction
+      
+  DataQueryFunctionName:
+    Description: Data Query Lambda Function Name (API Backend)
+    Value: !Ref DataQueryFunction
+    Export:
+      Name: !Sub ${AWS::StackName}-DataQueryFunction
+
+  ApiEndpoint:
+    Description: API Gateway Endpoint URL for Summary Query
+    Value: !Sub https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/prod/summary/{companyType}
+    Export:
+      Name: !Sub ${AWS::StackName}-ApiEndpoint
