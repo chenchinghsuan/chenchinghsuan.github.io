@@ -1,215 +1,116 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>陳璟萱 (Maggie) 的個人簡歷</title>
+    <title>Maggie C. - Business Strategy Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap');
-
         body {
-            font-family: 'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.7;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f7f6;
-            color: #4a4a4a;
+            font-family: 'Lato', sans-serif;
+            background-color: #111827;
+            color: #d1d5db;
         }
-
-        /* --- 全新網格容器 --- */
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            max-width: 900px;
-            margin: 20px auto;
+        h1, h2, h3, h4, h5, h6, .font-poppins { font-family: 'Poppins', sans-serif; }
+        .text-primary { color: #f472b6; }
+        .bg-primary { background-color: #f472b6; }
+        .border-primary { border-color: #f472b6; }
+        .glass-card {
+            background: rgba(31, 41, 55, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        /* --- 卡片通用樣式 --- */
-        .card {
-            background-color: #ffffff;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.07);
-            transition: all 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        /* --- 網格佈局設定 --- */
-        .profile-card    { grid-area: 1 / 1 / 2 / 2; }
-        .about-card      { grid-area: 1 / 2 / 2 / 3; }
-        .education-card  { grid-area: 2 / 1 / 3 / 2; }
-        .experience-card { grid-area: 2 / 2 / 3 / 3; } 
-        .certs-card      { grid-area: 3 / 1 / 4 / 3; }
-        .traits-card     { grid-area: 4 / 1 / 5 / 3; }
-        .contact-card    { grid-area: 5 / 1 / 6 / 3; }
-
-
-        /* --- 各卡片內部樣式 --- */
-        .profile-card {
-            text-align: center;
-            background-color: #a991d4;
-            color: white;
-        }
-
-        .profile-photo {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            border: 6px solid #ffffff;
-            object-fit: cover;
-            object-position: center top;
-            margin-bottom: 15px;
-        }
-
-        .profile-card h1 {
-            margin: 10px 0 5px 0;
-            font-size: 2em;
-            font-weight: 800;
-        }
-
-        .profile-card p {
-            margin: 0;
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-        
-        .card h2 {
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-            font-weight: 700;
-            color: #34495e;
-            border-bottom: 2px solid #a991d4;
-            padding-bottom: 10px;
-        }
-
-        ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        ul li {
-            padding: 5px 0;
-        }
-        
-        /* --- 雙欄列表樣式 (新增這一段) --- */
-        .two-columns {
-            padding: 0;
-            margin: 0;
-            list-style: none;
-            column-count: 2;
-            column-gap: 30px;
-        }
-
-        /* 巢狀清單的樣式微調 */
-        ul ul li {
-            border-left: none;
-            padding: 2px 0 2px 15px;
-        }
-        
-        b { color: #34495e; }
-
-        .contact-card {
-            text-align: center;
-        }
-        
-        .contact-card a {
-            color: #a991d4;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 1.1em;
-        }
-        
-        /* --- 響應式設計：手機版 --- */
-        @media (max-width: 768px) {
-            body { padding: 0; }
-            .grid-container {
-                grid-template-columns: 1fr;
-                gap: 0;
-                margin: 0;
-            }
-            .profile-card, .about-card, .education-card, .experience-card, .certs-card, .traits-card, .contact-card {
-                grid-area: auto;
-                border-radius: 0;
-                margin-bottom: 10px;
-            }
-            .grid-container .card:last-child {
-                margin-bottom: 0;
-            }
+        .glass-tag {
+            background: rgba(244, 114, 182, 0.1);
+            border: 1px solid rgba(244, 114, 182, 0.3);
         }
     </style>
 </head>
-<body>
+<body class="antialiased selection:bg-pink-500 selection:text-white">
+    <div class="container mx-auto max-w-3xl p-6 md:p-12 mt-8 md:mt-16">
+        <header class="flex flex-col md:flex-row items-start md:items-center mb-16">
+            <div class="relative group mb-6 md:mb-0 md:mr-10 flex-shrink-0">
+                <div class="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+                <!-- 使用 UI Avatar 或替換為真實照片 -->
+                <img src="https://ui-avatars.com/api/?name=Maggie+C&background=db2777&color=fff&size=256" alt="Maggie C." class="relative w-40 h-40 rounded-full object-cover border-4 border-gray-800 shadow-2xl bg-gray-700">
+            </div>
+            <div class="flex-1">
+                <h1 class="text-4xl md:text-5xl font-bold text-white font-poppins mb-2 tracking-tight">Maggie C.</h1>
+                <div class="flex flex-wrap items-center gap-2 mb-4 text-primary font-semibold font-poppins text-lg">
+                    <span>Business Strategy</span>
+                    <span class="text-gray-600">•</span>
+                    <span>Marketing Lead</span>
+                </div>
+                <p class="text-gray-300 leading-relaxed mb-6">
+                    Hello! 我是 Maggie C.，負責 BlinkAI 的市場策略。我擅長分析粉絲經濟趨勢，致力於設計可持續的商業模式，並將我們的技術價值準確傳遞給目標受眾。
+                </p>
+                <div class="flex flex-wrap gap-3">
+                    <a href="https://github.com/chenchinghsuan" target="_blank" class="glass-card px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm">
+                        <i class="fa-brands fa-github text-white"></i><span>GitHub</span>
+                    </a>
+                    <a href="#" target="_blank" class="glass-card px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm">
+                        <i class="fa-brands fa-linkedin text-blue-400"></i><span>LinkedIn</span>
+                    </a>
+                </div>
+            </div>
+        </header>
 
-    <div class="grid-container">
-        
-        <div class="card profile-card">
-            <img src="profile.jpg" alt="陳璟萱的照片" class="profile-photo">
-            <h1>陳璟萱 (Maggie)</h1>
-           
-        </div>
+        <section class="mb-16">
+            <h2 class="text-2xl font-bold text-white font-poppins mb-6 flex items-center">
+                <i class="fa-solid fa-code text-primary mr-3 text-xl"></i> 技術專長
+            </h2>
+            <div class="flex flex-wrap gap-3">
+                <span class="glass-tag text-primary px-4 py-2 rounded-full text-sm font-medium">Business Model Canvas</span>
+                <span class="glass-tag text-primary px-4 py-2 rounded-full text-sm font-medium">Market Analysis</span>
+                <span class="glass-card text-gray-300 px-4 py-2 rounded-full text-sm">User Research (Personas)</span>
+                <span class="glass-card text-gray-300 px-4 py-2 rounded-full text-sm">Product Strategy</span>
+                <span class="glass-card text-gray-300 px-4 py-2 rounded-full text-sm">Go-to-Market</span>
+                <span class="glass-card text-gray-300 px-4 py-2 rounded-full text-sm">Branding</span>
+            </div>
+        </section>
 
-        <div class="card about-card">
-            <h2>ABOUT ME</h2>
-            <p>
-                我的人生哲學就是捕捉生活中的每一個亮點，期待能和你們一起創造更多閃閃發光的日子⭐ 
-                我喜歡笑，也喜歡讓身邊的人開心，希望能把這份快樂魔法分享給你們每一個人！
-            </p>
-        </div>
-        
-        <div class="card education-card">
-            <h2>EDUCATION</h2>
-            <ul>
-                <li><b>主修：</b>淡江大學 經濟學系</li>
-                <li><b>輔修：</b>淡江大學 財務金融學系</li>
-            </ul>
-        </div>
-        
-        <div class="card experience-card">
-            <h2>EXPERIENCE</h2>
-            <ul>
-                <li>
-                    <b>淡江之聲電台 - 新聞部經理、節目主持人</b><br>
-                    
-                    <ul>
-                        <li>- 獨立企劃並主持回到小時候、嬉戲胡搞瞎搞等節目</li>
-                        <li>- 從腳本撰寫到播出，學習專案合作技巧</li>
-                        <li>- 國立台灣藝術大學第50屆藝美獎：最佳公益廣告獎</li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
-        
-        <div class="card certs-card">
-            <h2>CERTIFICATIONS</h2>
-            <ul class="two-columns">
-            <ul>
-                <li>TOEIC 690分</li>
-                <li>金融市場常識與職業道德</li>
-                <li>信託業業務人員信託業務</li>
-                <li>人身保險業務員</li>
-                <li>銀行內部控制與內部稽核測驗</li>
-                <li>MOS 365 Excel Expert</li>
-                <li>MOS 365 Word Expert</li>
-                <li>MOS 365 PowerPoint Associate</li>
-                <li>Google Analytics 4</li>
-            </ul>
-        </div>
-        
-        </div>
-        
-        <div class="card contact-card">
-            <h2>CONTACT</h2>
-            <p><a href="mailto:你的email@example.com">email</a></p>
-        </div>
+        <section>
+            <h2 class="text-2xl font-bold text-white font-poppins mb-6 flex items-center">
+                <i class="fa-solid fa-rocket text-primary mr-3 text-xl"></i> 精選專案
+            </h2>
+            <div class="glass-card rounded-2xl p-1 p-px bg-gradient-to-br from-pink-500/20 to-purple-500/20 hover:from-pink-500/40 hover:to-purple-500/40 transition-all">
+                <div class="bg-[#161f2f] rounded-2xl p-8 h-full relative overflow-hidden">
+                    <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl"></div>
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-2xl font-bold text-white font-poppins">BlinkAI</h3>
+                            <span class="bg-pink-900/50 text-pink-300 text-xs px-3 py-1 rounded-full border border-pink-700/50">AI Assistant</span>
+                        </div>
+                        <p class="text-gray-400 mb-6 leading-relaxed">
+                            一個專為 BLACKPINK 粉絲打造的 AI 知識庫與助理。利用 RAG (檢索增強生成) 技術，確保回答 100% 基於官方驗證事實，有效解決大型語言模型的幻覺問題。
+                        </p>
+                        <div class="bg-gray-800/50 rounded-xl p-5 mb-6 border border-gray-700/50">
+                            <h4 class="text-sm font-bold text-primary uppercase tracking-wider mb-2">My Contribution</h4>
+                            <ul class="space-y-2 text-gray-300 text-sm">
+                                <li class="flex items-start"><i class="fa-solid fa-check text-green-400 mt-1 mr-2"></i><span><strong>商業模式規劃：</strong>設計 B2C 訂閱與 B2B API 授權之混合收益模式。</span></li>
+                                <li class="flex items-start"><i class="fa-solid fa-check text-green-400 mt-1 mr-2"></i><span><strong>市場客群分析：</strong>定義核心用戶畫像 (Personas)，制定精準的市場推廣策略。</span></li>
+                            </ul>
+                        </div>
+                        <div class="flex gap-4">
+                            <a href="https://ecoshane.github.io/BlinkAI/" target="_blank" class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-gray-900 bg-primary rounded-lg hover:bg-pink-300 transition-colors focus:ring-4 focus:outline-none focus:ring-pink-300/50">
+                                <i class="fa-solid fa-globe mr-2"></i>查看官網
+                            </a>
+                            <a href="BlinkAI.pdf" target="_blank" class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors border border-gray-600">
+                                <i class="fa-solid fa-file-pdf mr-2"></i>專案簡報
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
+        <footer class="text-center text-gray-600 text-sm mt-20 pb-8">
+            <p>&copy; 2025 Maggie C. All rights reserved.</p>
+        </footer>
     </div>
-
 </body>
 </html>
